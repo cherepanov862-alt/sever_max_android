@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Севермакс</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06080C; --card:#12151C; --card-b:#1E222B;
+    --text:#F1F3F6; --muted:#6E7684;
+    --start:#FFB020; --stop:#FF453A; --info:#33C2FF; --ok:#3EDC97;
+    padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); box-sizing:border-box;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0; background:
+      radial-gradient(ellipse 500px 260px at 50% 0%, rgba(255,176,32,.08), transparent 70%), var(--bg);
+    color:var(--text); font-family:'Inter',system-ui,sans-serif; display:flex; justify-content:center;}
+  .frame{width:100%; max-width:480px; min-height:100%; position:relative;}
+  h1,h2,.num,.fob-label{font-family:'Space Grotesk',sans-serif;}
+
+  header{padding:20px 22px 4px; display:flex; align-items:center;}
+  .idbox{display:flex; align-items:center; gap:10px;}
+  .mark{width:30px;height:30px;flex:none;}
+  .brand{font-size:17px; font-weight:700; font-family:'Space Grotesk',sans-serif;}
+  .sim-tag{display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); font-weight:600;}
+  .bars{display:flex; align-items:flex-end; gap:2px; height:10px;}
+  .bars i{width:3px; background:var(--muted); border-radius:1px;}
+  .bars i:nth-child(1){height:35%;} .bars i:nth-child(2){height:55%;background:var(--ok);}
+  .bars i:nth-child(3){height:75%;background:var(--ok);} .bars i:nth-child(4){height:100%;background:var(--ok);}
+
+  main{padding:8px 18px 96px; display:flex; flex-direction:column; gap:16px;}
+  .view{display:none; flex-direction:column; gap:16px;}
+  .view.active{display:flex;}
+
+  /* FOB HERO */
+  .model-chip{align-self:center; font-size:11.5px; font-weight:700; color:var(--start); background:rgba(255,176,32,.1);
+    border:1px solid rgba(255,176,32,.3); padding:5px 13px; border-radius:20px;}
+  .fobrow{display:flex; justify-content:center; gap:26px; padding:6px 0 2px;}
+  .fob{width:118px; height:118px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; cursor:pointer; border:none; transition:transform .1s;}
+  .fob:active{transform:scale(.95);}
+  .fob-start{background:radial-gradient(circle at 35% 30%, #FFC658, var(--start) 70%); box-shadow:0 0 0 6px rgba(255,176,32,.1), 0 12px 30px -8px rgba(255,176,32,.55);}
+  .fob-stop{background:#181B22; border:2px solid var(--card-b); box-shadow:0 0 0 6px rgba(255,69,58,.05);}
+  .fob-start svg{stroke:#1A0F00;} .fob-stop svg{stroke:var(--stop);}
+  .fob svg{width:30px; height:30px;}
+  .fob-label{font-size:13.5px; font-weight:700; color:#1A0F00;}
+  .fob-stop .fob-label{color:var(--text);}
+  .fob-sub{text-align:center; font-size:12px; color:var(--muted); padding:0 30px;}
+
+  .chiprow{display:flex; gap:8px; overflow-x:auto; padding-bottom:2px;}
+  .chip{flex:none; display:flex; align-items:center; gap:6px; padding:10px 15px; border-radius:14px; background:var(--card);
+    border:1px solid var(--card-b); font-size:12.5px; font-weight:600; color:var(--text); cursor:pointer; white-space:nowrap;}
+  .chip svg{width:14px; height:14px;}
+
+  /* BENTO */
+  .bento{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .tile{background:var(--card); border:1px solid var(--card-b); border-radius:18px; padding:16px; border-left:3px solid var(--edge,var(--start));}
+  .tile.wide{grid-column:1/-1;}
+  .tile .label{font-size:11.5px; font-weight:600; color:var(--muted); margin-bottom:8px;}
+  .num{font-size:28px; font-weight:700;}
+  .unit{font-size:12px; color:var(--muted); font-weight:600;}
+
+  .slider{-webkit-appearance:none; width:100%; height:6px; border-radius:3px; margin:12px 0 2px; outline:none;}
+  .slider::-webkit-slider-thumb{-webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+    background:#fff; border:4px solid var(--edge,var(--start)); cursor:pointer; margin-top:-7px;}
+  .slider::-webkit-slider-runnable-track{height:6px; border-radius:3px;}
+
+  .btn{display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:14px;
+    font-size:13.5px; font-weight:700; cursor:pointer; width:100%; border:none; margin-top:12px;}
+  .btn-solid{background:var(--edge,var(--start)); color:#1A0F00;}
+  .btn-ghost{background:transparent; border:1px solid var(--card-b); color:var(--text);}
+  .hint{font-size:11.5px; color:var(--muted); line-height:1.5; margin-top:10px;}
+
+  input[type=text]{width:100%; padding:13px 14px; border-radius:13px; border:1px solid var(--card-b);
+    background:#0D0F14; color:var(--text); font-size:14px; font-family:inherit;}
+  input::placeholder{color:var(--muted);}
+
+  .radio-item{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--card-b); cursor:pointer;}
+  .radio-item:last-of-type{border-bottom:none;}
+  .radio{width:18px; height:18px; border-radius:50%; border:2px solid var(--card-b); flex:none; position:relative;}
+  .radio.sel{border-color:var(--start);}
+  .radio.sel::after{content:''; position:absolute; inset:3px; border-radius:50%; background:var(--start);}
+
+  .slots{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
+  .slot{padding:11px 4px; text-align:center; border-radius:12px; border:1px solid var(--card-b); background:#0D0F14; color:var(--info); font-size:12px; font-weight:700; cursor:pointer;}
+
+  .rowflex{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .switch{width:44px; height:26px; border-radius:14px; background:#0D0F14; border:1px solid var(--card-b); position:relative; cursor:pointer; flex:none;}
+  .switch::after{content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:var(--muted); transition:.15s;}
+  .switch.on{background:rgba(255,176,32,.15); border-color:var(--start);}
+  .switch.on::after{left:19px; background:var(--start);}
+
+  .seg{display:flex; background:#0D0F14; border:1px solid var(--card-b); border-radius:13px; padding:3px; gap:3px;}
+  .seg button{flex:1; border:none; background:transparent; color:var(--muted); font-family:inherit; font-size:12.5px;
+    font-weight:700; padding:10px 6px; border-radius:10px; cursor:pointer;}
+  .seg button.on{background:var(--start); color:#1A0F00;}
+
+  .daychips{display:flex; gap:6px; margin-top:12px;}
+  .daychip{flex:1; text-align:center; padding:9px 0; border-radius:10px; border:1px solid var(--card-b); background:#0D0F14;
+    font-size:11.5px; font-weight:700; color:var(--muted); cursor:pointer;}
+  .daychip.on{background:rgba(255,176,32,.15); border-color:var(--start); color:var(--start);}
+
+  input[type=time]{width:100%; padding:12px 14px; border-radius:13px; border:1px solid var(--card-b);
+    background:#0D0F14; color:var(--text); font-size:16px; font-family:inherit; color-scheme:dark;}
+
+  .sched-row{display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--card-b);}
+  .sched-row:last-child{border-bottom:none;}
+  .sched-time{font-size:19px; font-weight:700; font-family:'Space Grotesk',sans-serif; width:58px; flex:none;}
+  .sched-meta{flex:1;}
+  .sched-days{font-size:11.5px; color:var(--muted); font-weight:600;}
+  .sched-mode{font-size:12.5px; margin-top:2px;}
+  .sched-del{color:var(--stop); font-size:12px; font-weight:700; cursor:pointer; flex:none;}
+  .sched-empty{font-size:12.5px; color:var(--muted); padding:6px 0;}
+
+  .log-empty{padding:60px 20px; text-align:center; color:var(--muted); font-size:14px;}
+  .log-item{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--card-b);}
+  .log-item:last-child{border-bottom:none;}
+  .log-dot{width:9px; height:9px; border-radius:50%; margin-top:5px; flex:none;}
+  .log-dot.ok{background:var(--ok);} .log-dot.err{background:var(--stop);}
+  .log-text{font-size:13.5px; font-weight:600;}
+  .log-time{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .clear-link{color:var(--start); font-size:13px; font-weight:700; cursor:pointer;}
+
+  .car-cover{position:relative; height:150px; border-radius:20px; overflow:hidden; background:#12151C; border:1px solid var(--card-b);
+    display:flex; align-items:center; justify-content:center;}
+  .car-cover img{width:100%; height:100%; object-fit:cover; display:block;}
+  .car-cover .ph{display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--muted); font-size:12.5px; text-align:center; padding:0 30px;}
+  .car-cover .ph svg{width:34px; height:34px; opacity:.6;}
+  .car-tag{position:absolute; left:12px; bottom:12px; background:rgba(6,8,12,.7); backdrop-filter:blur(6px);
+    padding:6px 12px; border-radius:12px; font-size:12.5px; font-weight:700;}
+
+  .upload-row{display:flex; align-items:center; gap:14px;}
+  .upload-thumb{width:64px; height:64px; border-radius:14px; background:#0D0F14; border:1px solid var(--card-b);
+    flex:none; display:flex; align-items:center; justify-content:center; overflow:hidden;}
+  .upload-thumb img{width:100%; height:100%; object-fit:cover;}
+  .upload-thumb svg{width:22px; height:22px; color:var(--muted);}
+  .file-btn{position:relative; overflow:hidden; flex:1;}
+  .file-btn input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer;}
+  select{width:100%; padding:13px 14px; border-radius:13px; border:1px solid var(--card-b);
+    background:#0D0F14; color:var(--text); font-size:14px; font-family:inherit; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236E7684' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 14px center; background-size:16px;}
+  .field-gap{margin-top:12px;}
+
+  nav{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px;
+    display:flex; background:#0B0D12; border-top:1px solid var(--card-b);
+    padding:10px 8px calc(10px + env(safe-area-inset-bottom,0px));}
+  .tab{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--muted); font-size:11px; font-weight:600; cursor:pointer;}
+  .tab.active{color:var(--start);}
+  .tab svg{width:21px; height:21px;}
+</style>
+</head>
+<body>
+<div class="frame">
+  <header>
+    <div class="idbox">
+      <svg class="mark" viewBox="0 0 40 40">
+        <rect width="40" height="40" rx="10" fill="#12151C"/>
+        <path d="M8 27 L20 11 L32 27" stroke="#FFB020" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="brand">СЕВЕРМАКС</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- УПРАВЛЕНИЕ -->
+    <section class="view active" id="v-control">
+      <div class="model-chip">Severmax 5000-4mini</div>
+
+      <div class="car-cover" id="carCover">
+        <div class="ph" id="carPlaceholder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l1.5-4.5A2 2 0 016.4 6h11.2a2 2 0 011.9 1.5L21 12M5 12h14v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H8v1a1 1 0 01-1 1H6a1 1 0 01-1-1v-5z"/><circle cx="7.5" cy="15" r="1"/><circle cx="16.5" cy="15" r="1"/></svg>
+          Добавьте фото своей машины в «Настройках»
+        </div>
+        <img id="carPhoto" style="display:none">
+        <div class="car-tag" id="carTag" style="display:none"></div>
+      </div>
+
+      <div class="fobrow">
+        <button class="fob fob-start" onclick="sendCommand(CMD_START)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l14 8-14 8V4z" fill="#1A0F00"/></svg>
+          <span class="fob-label">Запуск</span>
+        </button>
+        <button class="fob fob-stop" onclick="sendCommand(CMD_STOP)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+          <span class="fob-label">Стоп</span>
+        </button>
+      </div>
+      <div class="fob-sub">Команда уходит SMS-сообщением. Повторный запуск после остановки — не раньше 3 минут.</div>
+
+      <div class="chiprow">
+        <div class="chip" onclick="sendCommand(CMD_STATUS)"><svg viewBox="0 0 24 24" fill="none" stroke="#33C2FF" stroke-width="2"><path d="M4 19V9M10 19V5M16 19v-7M22 19v-4"/></svg>Запросить статус</div>
+        <div class="chip" onclick="switchTab('v-schedule')"><svg viewBox="0 0 24 24" fill="none" stroke="#33C2FF" stroke-width="2"><path d="M12 3s5 4.5 5 9a5 5 0 0 1-10 0c0-1.6.8-2.9 1.6-4"/></svg>Режим догрева</div>
+        <div class="chip" onclick="sendCommand(CMD_RESET)"><svg viewBox="0 0 24 24" fill="none" stroke="#33C2FF" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6"/><path d="M20 10a8 8 0 00-14.9-3M4 14a8 8 0 0014.9 3"/></svg>Сбросить</div>
+      </div>
+
+      <div class="bento">
+        <div class="tile wide" style="--edge:var(--start)">
+          <div class="label">Температура нагрева</div>
+          <span class="num" id="tval">65</span><span class="unit">°C</span>
+          <input class="slider" id="tslide" type="range" min="0" max="100" value="65" oninput="paint(this,'tval')" style="--edge:var(--start)">
+          <button class="btn btn-solid" style="--edge:var(--start)" onclick="sendCommand(cmdTemp(document.getElementById('tslide').value))">Установить температуру</button>
+          <div class="hint">Только записывает значение — подогреватель не запускается этой командой.</div>
+        </div>
+
+        <div class="tile" style="--edge:var(--info)">
+          <div class="label">Верхний порог</div>
+          <span class="num" id="hival">90</span><span class="unit">°C</span>
+          <input class="slider" id="hislide" type="range" min="0" max="100" value="90" oninput="paint(this,'hival')" style="--edge:var(--info)">
+        </div>
+        <div class="tile" style="--edge:var(--info)">
+          <div class="label">Нижний порог</div>
+          <span class="num" id="loval">30</span><span class="unit">°C</span>
+          <input class="slider" id="loslide" type="range" min="0" max="100" value="30" oninput="paint(this,'loval')" style="--edge:var(--info)">
+        </div>
+        <div class="tile wide" style="--edge:var(--info)">
+          <button class="btn btn-solid" style="--edge:var(--info)" onclick="sendCommand(cmdBoost(document.getElementById('hislide').value, document.getElementById('loslide').value))">Запустить в режиме догрева</button>
+          <button class="btn btn-ghost" style="margin-top:8px; border-color:var(--stop); color:var(--stop);" onclick="sendCommand(CMD_BOOST_OFF)">Отключить режим догрева</button>
+          <div class="hint">Держит температуру жидкости между порогами. Следующий запуск снова пойдёт в обычном режиме.</div>
+        </div>
+      </div>
+
+      <button class="btn btn-ghost" onclick="sendCommand(CMD_RESET)">Сбросить настройки подогревателя</button>
+    </section>
+
+    <!-- РАСПИСАНИЕ -->
+    <section class="view" id="v-schedule">
+      <div class="tile wide" style="--edge:var(--start)">
+        <div class="label">Автозапуск по времени</div>
+
+        <input type="time" id="schedTime" value="07:00">
+
+        <div class="daychips" id="dayChips">
+          <div class="daychip" data-d="0">Пн</div><div class="daychip" data-d="1">Вт</div><div class="daychip" data-d="2">Ср</div>
+          <div class="daychip" data-d="3">Чт</div><div class="daychip" data-d="4">Пт</div><div class="daychip" data-d="5">Сб</div>
+          <div class="daychip" data-d="6">Вс</div>
+        </div>
+
+        <div class="seg field-gap">
+          <button class="on" id="modeTempBtn" onclick="setSchedMode('temp')">По температуре</button>
+          <button id="modeDurBtn" onclick="setSchedMode('dur')">По времени работы</button>
+        </div>
+
+        <div id="schedTempBlock" class="field-gap">
+          <div class="value-row"><span style="font-size:13px; color:var(--muted);">Целевая температура</span><span class="num" id="schedTempVal" style="font-size:20px;">65</span></div>
+          <input class="slider" id="schedTempSlide" type="range" min="0" max="100" value="65" oninput="paint(this,'schedTempVal')" style="--edge:var(--start)">
+        </div>
+        <div id="schedDurBlock" class="field-gap" style="display:none;">
+          <div class="value-row"><span style="font-size:13px; color:var(--muted);">Время работы, мин</span><span class="num" id="schedDurVal" style="font-size:20px;">20</span></div>
+          <input class="slider" id="schedDurSlide" type="range" min="5" max="120" step="5" value="20" oninput="paint(this,'schedDurVal')" style="--edge:var(--start)">
+        </div>
+
+        <button class="btn btn-solid" style="--edge:var(--start)" onclick="addSchedule()">Добавить расписание</button>
+        <div class="hint">Телефон сам отправит команду запуска в указанное время — подогреватель не хранит расписание внутри себя.</div>
+      </div>
+
+      <div class="tile wide" style="--edge:var(--card-b)">
+        <div class="label">Активные расписания</div>
+        <div id="schedList"></div>
+      </div>
+    </section>
+
+    <!-- ЖУРНАЛ -->
+    <section class="view" id="v-journal">
+      <div class="tile wide rowflex" style="--edge:var(--card-b)">
+        <div class="label" style="margin:0;">Журнал SMS</div>
+        <span class="clear-link">Очистить</span>
+      </div>
+      <div class="tile wide" style="--edge:var(--card-b); padding:6px 16px;">
+        <div class="log-item"><div class="log-dot ok"></div><div><div class="log-text">Запуск — выполнено</div><div class="log-time">Сегодня, 12:04</div></div></div>
+        <div class="log-item"><div class="log-dot err"></div><div><div class="log-text">Установка температуры — код ошибки E2</div><div class="log-time">Сегодня, 11:58</div></div></div>
+        <div class="log-item"><div class="log-dot ok"></div><div><div class="log-text">Стоп — выполнено</div><div class="log-time">Вчера, 19:41</div></div></div>
+      </div>
+    </section>
+
+    <!-- НАСТРОЙКИ -->
+    <section class="view" id="v-settings">
+      <div class="tile wide" style="--edge:var(--start)">
+        <div class="label">Модель подогревателя</div>
+        <div class="radio-item" onclick="pick(this)"><div class="radio sel"></div>Severmax 5000-4mini</div>
+        <div class="radio-item" onclick="pick(this)"><div class="radio"></div>Severmax 5000</div>
+        <div class="radio-item" onclick="pick(this)"><div class="radio"></div>Severmax 5500 / PRO</div>
+        <div class="hint">От модели зависит набор SMS-команд — экран «Управление» подстроится автоматически.</div>
+      </div>
+
+      <div class="tile wide" style="--edge:var(--card-b)">
+        <div class="label">Подогреватель</div>
+        <input type="text" id="heaterNumber" placeholder="Номер SIM подогревателя" oninput="localStorage.setItem('sm_heater_number', this.value)">
+      </div>
+
+      <div class="tile wide" style="--edge:var(--start)">
+        <div class="label">Автомобиль</div>
+        <select id="brandSel" onchange="fillModels()"></select>
+        <select id="modelSel" class="field-gap" onchange="updateTag()"></select>
+
+        <div class="upload-row field-gap">
+          <div class="upload-thumb" id="thumbBox">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12l1.5-4.5A2 2 0 016.4 6h11.2a2 2 0 011.9 1.5L21 12M5 12h14v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H8v1a1 1 0 01-1 1H6a1 1 0 01-1-1v-5z"/></svg>
+          </div>
+          <button class="btn btn-ghost file-btn" style="margin:0;">Загрузить фото
+            <input type="file" accept="image/*" onchange="handlePhoto(event)">
+          </button>
+        </div>
+        <div class="hint">Фото хранится только в этом браузере на этом устройстве.</div>
+      </div>
+
+      <div class="tile wide" style="--edge:var(--info)">
+        <div class="label">Привязка этого телефона</div>
+        <div class="hint" style="margin-top:0;">Отправьте команду привязки с этого телефона в свободный слот. Подтверждение — SMS «ADDAUTH OK!».</div>
+        <div style="font-size:13px; color:var(--muted); margin:12px 0 8px;">Код в команде привязки</div>
+        <input type="text" value="123456">
+        <div class="slots" style="margin-top:12px;">
+          <div class="slot">Слот 1</div><div class="slot">Слот 2</div><div class="slot">Слот 3</div><div class="slot">Слот 4</div>
+        </div>
+      </div>
+
+      <div class="tile wide" style="--edge:var(--card-b)">
+        <div class="label">Telegram-бот</div>
+        <div class="hint" style="margin-top:0;">1) Создайте бота у @BotFather (/newbot) и вставьте токен.<br>2) Включите бота ниже.<br>3) Напишите боту сообщение — впишите chat id.</div>
+        <input type="text" placeholder="Токен бота" style="margin-top:12px;">
+        <input type="text" placeholder="Ваш chat id" style="margin-top:10px;">
+        <div class="rowflex" style="margin-top:14px;">
+          <span style="font-weight:700; font-size:14px;">Бот включён</span>
+          <div class="switch" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="hint">Телефон с SIM должен быть онлайн. Команды: ▶ Запуск, ■ Стоп, 📊 Статус, /temp 65, /boost 90 30.</div>
+      </div>
+
+      <div class="tile wide" style="--edge:var(--start)">
+        <div class="label">Поддержать разработку</div>
+        <div style="font-size:19px; font-weight:800; margin:4px 0 10px;">+7 913 281-41-35</div>
+        <button class="btn btn-ghost">☕ Скопировать номер</button>
+      </div>
+    </section>
+  </main>
+
+  <nav>
+    <div class="tab active" data-view="v-control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3s5 4.5 5 9a5 5 0 0 1-10 0c0-1.6.8-2.9 1.6-4"/></svg>
+      Управление
+    </div>
+    <div class="tab" data-view="v-schedule">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+      Расписание
+    </div>
+    <div class="tab" data-view="v-journal">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+      Журнал
+    </div>
+    <div class="tab" data-view="v-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Настройки
+    </div>
+  </nav>
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById(t.dataset.view).classList.add('active');
+    });
+  });
+  function paintTrack(el){
+    const c = getComputedStyle(el).getPropertyValue('--edge').trim() || '#FFB020';
+    const pct = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.background = `linear-gradient(90deg, ${c}, ${c} ${pct}%, #1E222B ${pct}%)`;
+  }
+  function paint(el, targetId){ document.getElementById(targetId).textContent = el.value; paintTrack(el); }
+  ['tslide','hislide','loslide'].forEach(id=>paintTrack(document.getElementById(id)));
+  function pick(item){
+    item.parentElement.querySelectorAll('.radio').forEach(r=>r.classList.remove('sel'));
+    item.querySelector('.radio').classList.add('sel');
+  }
+
+  // ---- Автомобиль: марка/модель/фото ----
+  const CARS = {
+    "Toyota": ["Camry","Corolla","RAV4","Land Cruiser","Land Cruiser Prado","Highlander","Fortuner","Hilux","Avensis","Vitz","Prius","C-HR","Land Cruiser 200","Alphard"],
+    "Nissan": ["Qashqai","X-Trail","Almera","Teana","Note","Juke","Murano","Pathfinder","Terrano","Sentra","Tiida","Patrol","Navara","Skyline"],
+    "Mazda": ["3","6","CX-3","CX-5","CX-7","CX-9","CX-30","Axela","Atenza","Demio","MX-5","BT-50"],
+    "Mitsubishi": ["Outlander","ASX","Lancer","Pajero","Pajero Sport","L200","Eclipse Cross","Colt","Galant","Delica"],
+    "Kia": ["Rio","Sportage","K5","Sorento","Cerato","Optima","Soul","Seltos","Sonet","Ceed","Picanto"],
+    "Hyundai": ["Solaris","Creta","Tucson","Santa Fe","Elantra","Sonata","Accent","i30","Palisade","Getz","ix35"],
+    "Lada": ["Vesta","Granta","Niva","XRAY","Kalina","Priora","2114","2107","Largus"],
+    "Volkswagen": ["Polo","Tiguan","Passat","Jetta","Golf","Touareg","Teramont","Caddy","Amarok"],
+    "BMW": ["3 серии","5 серии","X3","X5","1 серии","7 серии","X1","X6","4 серии"],
+    "Mercedes-Benz": ["C-Class","E-Class","GLC","GLE","S-Class","GLA","G-Class","A-Class","Vito"],
+    "Ford": ["Focus","Kuga","Explorer","Mondeo","Fiesta","EcoSport","Ranger","Transit"],
+    "Skoda": ["Octavia","Rapid","Kodiaq","Karoq","Superb","Fabia","Yeti"],
+    "Renault": ["Duster","Logan","Arkana","Sandero","Kaptur","Megane","Fluence"],
+    "Subaru": ["Forester","Outback","Impreza","XV","Legacy","Levorg"],
+    "Honda": ["CR-V","Civic","Accord","Fit","Pilot","Freed","Vezel"]
+  };
+
+  function fillBrands(selected){
+    const sel = document.getElementById('brandSel');
+    sel.innerHTML = Object.keys(CARS).map(b=>`<option ${b===selected?'selected':''}>${b}</option>`).join('');
+  }
+  function fillModels(selectedModel){
+    const brand = document.getElementById('brandSel').value;
+    const msel = document.getElementById('modelSel');
+    msel.innerHTML = CARS[brand].map(m=>`<option ${m===selectedModel?'selected':''}>${m}</option>`).join('');
+    updateTag();
+    saveCarMeta();
+  }
+  function updateTag(){
+    const brand = document.getElementById('brandSel').value;
+    const model = document.getElementById('modelSel').value;
+    const tag = document.getElementById('carTag');
+    tag.textContent = `${brand} ${model}`;
+    saveCarMeta();
+  }
+  function saveCarMeta(){
+    try{
+      localStorage.setItem('sm_car_brand', document.getElementById('brandSel').value);
+      localStorage.setItem('sm_car_model', document.getElementById('modelSel').value);
+    }catch(e){}
+  }
+
+  function handlePhoto(evt){
+    const file = evt.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        const canvas = document.createElement('canvas');
+        const maxW = 900;
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        applyPhoto(dataUrl);
+        try{ localStorage.setItem('sm_car_photo', dataUrl); }catch(err){}
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  function applyPhoto(dataUrl){
+    document.getElementById('carPhoto').src = dataUrl;
+    document.getElementById('carPhoto').style.display = 'block';
+    document.getElementById('carPlaceholder').style.display = 'none';
+    document.getElementById('carTag').style.display = 'block';
+    document.getElementById('thumbBox').innerHTML = `<img src="${dataUrl}">`;
+  }
+
+  (function initCar(){
+    let savedBrand=null, savedModel=null, savedPhoto=null;
+    try{
+      savedBrand = localStorage.getItem('sm_car_brand');
+      savedModel = localStorage.getItem('sm_car_model');
+      savedPhoto = localStorage.getItem('sm_car_photo');
+    }catch(e){}
+    fillBrands(savedBrand);
+    fillModels(savedModel);
+    if(savedPhoto) applyPhoto(savedPhoto);
+  })();
+
+  // ---- Автозапуск по времени ----
+  const DAY_LABELS = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+  let schedMode = 'temp';
+  let selectedDays = [];
+  let schedules = [];
+
+  document.querySelectorAll('.daychip').forEach(ch=>{
+    ch.addEventListener('click', ()=>{
+      ch.classList.toggle('on');
+      const d = ch.dataset.d;
+      selectedDays = selectedDays.includes(d) ? selectedDays.filter(x=>x!==d) : [...selectedDays, d];
+    });
+  });
+
+  function setSchedMode(mode){
+    schedMode = mode;
+    document.getElementById('modeTempBtn').classList.toggle('on', mode==='temp');
+    document.getElementById('modeDurBtn').classList.toggle('on', mode==='dur');
+    document.getElementById('schedTempBlock').style.display = mode==='temp' ? 'block' : 'none';
+    document.getElementById('schedDurBlock').style.display = mode==='dur' ? 'block' : 'none';
+  }
+
+  function addSchedule(){
+    const time = document.getElementById('schedTime').value || '00:00';
+    const days = [...selectedDays].sort();
+    const value = schedMode==='temp'
+      ? document.getElementById('schedTempSlide').value + '°C'
+      : document.getElementById('schedDurSlide').value + ' мин';
+    schedules.push({time, days, mode:schedMode, value});
+    saveSchedules();
+    renderSchedules();
+  }
+  function removeSchedule(i){
+    schedules.splice(i,1);
+    saveSchedules();
+    renderSchedules();
+  }
+  function renderSchedules(){
+    const box = document.getElementById('schedList');
+    if(schedules.length===0){ box.innerHTML = '<div class="sched-empty">Расписаний пока нет</div>'; return; }
+    box.innerHTML = schedules.map((s,i)=>{
+      const daysTxt = s.days.length ? s.days.map(d=>DAY_LABELS[d]).join(', ') : 'Ежедневно';
+      const modeTxt = s.mode==='temp' ? `нагрев до ${s.value}` : `работа ${s.value}`;
+      return `<div class="sched-row">
+        <div class="sched-time">${s.time}</div>
+        <div class="sched-meta"><div class="sched-days">${daysTxt}</div><div class="sched-mode">${modeTxt}</div></div>
+        <div class="sched-del" onclick="removeSchedule(${i})">Удалить</div>
+      </div>`;
+    }).join('');
+  }
+  function saveSchedules(){
+    try{ localStorage.setItem('sm_schedules', JSON.stringify(schedules)); }catch(e){}
+  }
+  (function initSchedules(){
+    try{
+      const raw = localStorage.getItem('sm_schedules');
+      if(raw) schedules = JSON.parse(raw);
+    }catch(e){}
+    renderSchedules();
+  })();
+
+  // ---- Мост к SMS (Android.sendSms предоставляется нативной оболочкой) ----
+  // ВАЖНО: точный текст команд ниже — заглушка. Свери его с реальным
+  // протоколом Severmax (см. документацию/прошивку устройства) и поправь
+  // константы и функции cmdTemp/cmdBoost под настоящий формат.
+  const CMD_START  = "ON";
+  const CMD_STOP   = "OFF";
+  const CMD_STATUS = "STATUS";
+  const CMD_RESET  = "RESET";
+  const CMD_BOOST_OFF = "XHPZ OFF";
+  function cmdTemp(t){ return "TEMP=" + t; }
+  function cmdBoost(hi, lo){ return "BOOST=" + hi + "," + lo; }
+
+  function sendCommand(text){
+    const number = (document.getElementById('heaterNumber').value || '').trim();
+    if(window.Android && typeof window.Android.sendSms === 'function'){
+      window.Android.sendSms(number, text);
+    } else {
+      // Предпросмотр в браузере / артефакте — SMS реально не уходит
+      console.log('sendSms →', number, text);
+      alert('Демо-режим (не в приложении): команда "' + text + '" отправилась бы на ' + (number || '— номер не задан'));
+    }
+  }
+
+  function switchTab(viewId){
+    document.querySelectorAll('.tab').forEach(x=>{
+      x.classList.toggle('active', x.dataset.view === viewId);
+    });
+    document.querySelectorAll('.view').forEach(x=>{
+      x.classList.toggle('active', x.id === viewId);
+    });
+  }
+
+  (function initHeaterNumber(){
+    try{
+      const n = localStorage.getItem('sm_heater_number');
+      if(n) document.getElementById('heaterNumber').value = n;
+    }catch(e){}
+  })();
+</script>
+</body>
+</html>
